@@ -2,6 +2,7 @@ package org.example.service;
 
 import com.google.gson.Gson;
 import org.example.client.OrderBookClient;
+import org.example.config.ConfigurationManager;
 import org.example.model.ApiResponse;
 import org.example.model.Order;
 import org.example.model.OrderBookData;
@@ -14,8 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OrderBookManagerService {
-    private static final String BTC_USDT_ENDPOINT = "wss://stream.binance.com:9443/ws/btcusdt@depth";
-    private static final String ETH_USDT_ENDPOINT = "wss://stream.binance.com:9443/ws/ethusdt@depth";
+    private static final String BTC_USDT_ENDPOINT = ConfigurationManager.getBTCUSDTApiEndpoint();
+    private static final String ETH_USDT_ENDPOINT = ConfigurationManager.getETHUSDTApiEndpoint();
     private static final String DEPTH_UPDATE = "depthUpdate";
     private final PrinterService printerService;
     private final OrderBookRepository orderBookRepository;
