@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class OrderBookRepository {
-    private Map<String, OrderBookData> orderBooks;
+    private final Map<String, OrderBookData> orderBooks;
 
     public OrderBookRepository(Map<String, OrderBookData> orderBooks) {
         this.orderBooks = orderBooks;

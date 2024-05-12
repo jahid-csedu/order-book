@@ -1,5 +1,6 @@
 package org.example.client;
 
+import org.example.util.logger.CustomLogger;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
@@ -16,7 +17,7 @@ public class OrderBookClient extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake handshakedata) {
-        System.out.println("Connected to Websocket API");
+        CustomLogger.info("Connected to Websocket API");
     }
 
     @Override
@@ -28,11 +29,11 @@ public class OrderBookClient extends WebSocketClient {
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        System.out.println("Connection Closed");
+        CustomLogger.info("Connection Closed");
     }
 
     @Override
     public void onError(Exception ex) {
-        System.err.println("Error occured: "+ex.getMessage());
+        CustomLogger.error("Error occurred: "+ex.getMessage(), ex);
     }
 }

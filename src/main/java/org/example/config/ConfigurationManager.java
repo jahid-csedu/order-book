@@ -1,5 +1,7 @@
 package org.example.config;
 
+import org.example.util.logger.CustomLogger;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -33,7 +35,7 @@ public class ConfigurationManager {
             properties.load(inputStream);
             return properties.getProperty(key);
         } catch (IOException e) {
-            System.err.println("Failed to load config: "+e.getMessage());
+            CustomLogger.error("Failed to load config: "+e.getMessage(), e);
             return null;
         }
     }
