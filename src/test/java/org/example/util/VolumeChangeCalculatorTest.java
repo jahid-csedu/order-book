@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
-import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,9 +50,38 @@ class VolumeChangeCalculatorTest {
 
         volumeChangeCalculator.calculateVolumeChangeForAllSymbols();
 
-        verify(printerService).printVolumeChange(eq("BTCUSDT"), eq(BigDecimal.valueOf(83)));
-        verify(printerService).printVolumeChange(eq("ETHUSDT"), eq(BigDecimal.valueOf(244)));
+        verify(printerService).printVolumeChange("BTCUSDT", BigDecimal.valueOf(83));
+        verify(printerService).printVolumeChange("ETHUSDT", BigDecimal.valueOf(244));
 
         verify(orderBookRepository).clear();
     }
+
+    @Test
+    void testCalculateVolumeChangeWhenNoKeysFound() {
+        when(orderBookRepository.findAllKeys()).thenReturn(Set.of());
+
+        volumeChangeCalculator.calculateVolumeChangeForAllSymbols();
+
+        verify(orderBookRepository, never()).getByKey("BTCUSDT");
+        verify(orderBookRepository, never()).getByKey("ETHUSDT");
+        verify(printerService, never()).printVolumeChange("ETHUSDT", BigDecimal.ZERO);
+
+        verify(orderBookRepository).clear();
+    }
+
+    @Test
+    void testCalculateVolumeChangeWhenNoDataFoundForTheKeys() {
+        when(orderBookRepository.findAllKeys()).thenReturn(Set.of("BTCUSDT", "ETHUSDT"));
+        when(orderBookRepository.getByKey("BTCUSDT")).thenReturn(null);
+        when(orderBookRepository.getByKey("ETHUSDT")).thenReturn(null);
+
+        volumeChangeCalculator.calculateVolumeChangeForAllSymbols();
+
+        verify(printerService).printVolumeChange("BTCUSDT", BigDecimal.ZERO);
+        verify(printerService).printVolumeChange("ETHUSDT", BigDecimal.ZERO);
+
+        // Verify that orderBookRepository.clear() was called
+        verify(orderBookRepository).clear();
+    }
+
 }

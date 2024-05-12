@@ -28,6 +28,10 @@ public class VolumeChangeCalculator {
     private BigDecimal calculateVolumeChange(OrderBookData orderBookData) {
         BigDecimal totalVolumeChange = BigDecimal.ZERO;
 
+        if(orderBookData == null) {
+            return totalVolumeChange;
+        }
+
         for (Order bid : orderBookData.bids()) {
             totalVolumeChange = totalVolumeChange.add(bid.price().multiply(bid.quantity()));
         }
