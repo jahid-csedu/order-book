@@ -7,6 +7,7 @@ import org.example.model.ApiResponse;
 import org.example.model.Order;
 import org.example.model.OrderBookData;
 import org.example.repository.OrderBookRepository;
+import org.example.util.PrinterService;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -15,8 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OrderBookManagerService {
-    private static final String BTC_USDT_ENDPOINT = ConfigurationManager.getBTCUSDTApiEndpoint();
-    private static final String ETH_USDT_ENDPOINT = ConfigurationManager.getETHUSDTApiEndpoint();
     private static final String DEPTH_UPDATE = "depthUpdate";
     private final PrinterService printerService;
     private final OrderBookRepository orderBookRepository;
@@ -25,18 +24,17 @@ public class OrderBookManagerService {
         this.printerService = printerService;
         this.orderBookRepository = orderBookRepository;
 
-        connectToClient(BTC_USDT_ENDPOINT);
-        connectToClient(ETH_USDT_ENDPOINT);
+        connectToClient(ConfigurationManager.getBTCUSDTApiEndpoint());
+        connectToClient(ConfigurationManager.getETHUSDTApiEndpoint());
     }
 
     private void connectToClient(String endpoint) {
         try {
             URI uri = new URI(endpoint);
-            OrderBookClient ethUsdtClient = new OrderBookClient(uri, this::handleMessage);
-            ethUsdtClient.connect();
+            OrderBookClient client = new OrderBookClient(uri, this::handleMessage);
+            client.connect();
         } catch (URISyntaxException e) {
-            System.err.println("Error occured: " + e.getMessage());
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException("Invalid URI: " + endpoint, e);
         }
     }
 
@@ -48,31 +46,44 @@ public class OrderBookManagerService {
     }
 
     private void handleDepthUpdate(ApiResponse apiResponse) {
+        String symbol = apiResponse.s();
         List<Order> bids = parseQuantityAndPrice(apiResponse.b());
         List<Order> asks = parseQuantityAndPrice(apiResponse.a());
-        printerService.printOrderBook(apiResponse.s(), bids, asks);
-        updateOrderBook(apiResponse.s(), bids, asks);
+        printerService.printOrderBook(symbol, bids, asks);
+        updateOrderBook(symbol, bids, asks);
     }
 
-    private List<Order> parseQuantityAndPrice(String[][] bidsArray) {
-        List<Order> bids = new ArrayList<>();
-        for (String[] bid : bidsArray) {
-            BigDecimal price = new BigDecimal(bid[0]);
-            BigDecimal quantity = new BigDecimal(bid[1]);
-            bids.add(new Order(price, quantity));
+    private List<Order> parseQuantityAndPrice(String[][] priceAndQuantities) {
+        List<Order> orders = new ArrayList<>();
+        for (String[] priceAndQuantity : priceAndQuantities) {
+            BigDecimal price = new BigDecimal(priceAndQuantity[0]);
+            BigDecimal quantity = new BigDecimal(priceAndQuantity[1]);
+            orders.add(new Order(price, quantity));
         }
-        return bids;
+        return orders;
     }
 
     private void updateOrderBook(String symbol, List<Order> bids, List<Order> asks) {
-        OrderBookData orderBookData = orderBookRepository.getByKey(symbol);
-        if (orderBookData == null) {
-            orderBookData = new OrderBookData(bids, asks);
+        OrderBookData currentOrderBookData = orderBookRepository.getByKey(symbol);
+        OrderBookData updatedOrderBookData;
+
+        if (currentOrderBookData == null) {
+            updatedOrderBookData = new OrderBookData(bids, asks);
         } else {
-            orderBookData.bids().addAll(bids);
-            orderBookData.asks().addAll(asks);
+            updatedOrderBookData = new OrderBookData(
+                    mergeOrders(currentOrderBookData.bids(), bids),
+                    mergeOrders(currentOrderBookData.asks(), asks)
+            );
         }
-        orderBookRepository.save(symbol, orderBookData);
+
+        orderBookRepository.save(symbol, updatedOrderBookData);
     }
+
+    private List<Order> mergeOrders(List<Order> existingOrders, List<Order> newOrders) {
+        List<Order> mergedOrders = new ArrayList<>(existingOrders);
+        mergedOrders.addAll(newOrders);
+        return mergedOrders;
+    }
+
 
 }

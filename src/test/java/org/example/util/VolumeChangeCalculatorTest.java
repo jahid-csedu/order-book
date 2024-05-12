@@ -3,7 +3,6 @@ package org.example.util;
 import org.example.model.Order;
 import org.example.model.OrderBookData;
 import org.example.repository.OrderBookRepository;
-import org.example.service.PrinterService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -80,7 +79,6 @@ class VolumeChangeCalculatorTest {
         verify(printerService).printVolumeChange("BTCUSDT", BigDecimal.ZERO);
         verify(printerService).printVolumeChange("ETHUSDT", BigDecimal.ZERO);
 
-        // Verify that orderBookRepository.clear() was called
         verify(orderBookRepository).clear();
     }
 
